@@ -16,5 +16,6 @@ overflow-checks = true
 borsh = "0.9.3"
 derive_more = "0.99.17"
 micro-anchor = { path = "../../libs/micro-anchor" }
+marinade-sdk-macro = { path = "../../libs/marinade-sdk-macro" }
 solana-program = "~1.10.29"
 spl-token = { version = "~3.3.0", features = ["no-entrypoint"] }

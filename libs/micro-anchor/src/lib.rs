@@ -1,5 +1,3 @@
-use std::{marker::PhantomData, error::Error};
-
 use borsh::{BorshDeserialize, BorshSerialize};
 use derive_more::{Display, Error};
 use solana_program::{
@@ -26,7 +24,6 @@ pub enum AccountDeserializeError {
     DiscriminatorMismatch,
     DidNotDeserialize,
 }
-
 
 /// A data structure that can be deserialized and stored into account storage,
 /// i.e. an

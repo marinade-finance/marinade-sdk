@@ -1,12 +1,14 @@
 pub mod calc;
 pub mod checks;
 pub mod error;
+pub mod instructions;
 pub mod located;
 pub mod state;
-pub mod instructions;
 
-use borsh::{BorshDeserialize, BorshSerialize};
 use solana_program::pubkey::Pubkey;
+
+#[macro_use]
+extern crate marinade_sdk_macro;
 
 /// The static program ID
 pub static ID: Pubkey = Pubkey::new_from_array([

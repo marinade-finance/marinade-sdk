@@ -2,8 +2,8 @@ use borsh::{BorshDeserialize, BorshSerialize};
 use solana_program::{entrypoint::ProgramResult, msg, program_error::ProgramError, pubkey::Pubkey};
 
 use crate::{
-    calc::proportional, checks::check_address, error::CommonError, state::fee::Fee, located::Located,
-    state::marinade::Marinade, ID,
+    calc::proportional, checks::check_address, error::CommonError, located::Located,
+    state::fee::Fee, state::marinade::Marinade, ID,
 };
 
 #[derive(Clone, BorshDeserialize, BorshSerialize, Debug)]

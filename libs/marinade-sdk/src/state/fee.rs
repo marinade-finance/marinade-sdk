@@ -1,6 +1,6 @@
 use std::{fmt::Display, str::FromStr};
 
-use borsh::{BorshSerialize, BorshDeserialize};
+use borsh::{BorshDeserialize, BorshSerialize};
 
 use crate::error::CommonError;
 

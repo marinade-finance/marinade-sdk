@@ -1,7 +1,10 @@
 use solana_program::stake::state::StakeState;
-use solana_program::{msg, pubkey::Pubkey, entrypoint::ProgramResult, program_error::ProgramError, account_info::AccountInfo};
-use spl_token::state::Mint;
+use solana_program::{
+    account_info::AccountInfo, entrypoint::ProgramResult, msg, program_error::ProgramError,
+    pubkey::Pubkey,
+};
 use spl_token::state::Account as TokenAccount;
+use spl_token::state::Mint;
 
 use crate::error::CommonError;
 

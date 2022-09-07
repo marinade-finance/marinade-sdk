@@ -1,5 +1,5 @@
 use borsh::{BorshDeserialize, BorshSchema, BorshSerialize};
-use solana_program::{pubkey::Pubkey, program_error::ProgramError, msg};
+use solana_program::{msg, program_error::ProgramError, pubkey::Pubkey};
 
 use crate::error::CommonError;
 
@@ -12,7 +12,6 @@ pub struct List {
     pub new_account: Pubkey,
     pub copied_count: u32,
 }
-
 
 impl List {
     pub fn bytes_for(item_size: u32, count: u32) -> u32 {

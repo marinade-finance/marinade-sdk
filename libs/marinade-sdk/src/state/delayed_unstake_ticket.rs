@@ -1,8 +1,6 @@
 use borsh::{BorshDeserialize, BorshSerialize};
-use micro_anchor::{Discriminator, Owner, AccountDeserialize};
+use micro_anchor::{AccountDeserialize, Discriminator, Owner};
 use solana_program::pubkey::Pubkey;
-
-
 
 #[derive(Debug, BorshDeserialize, BorshSerialize)]
 pub struct DelayedUnstakeTicket {

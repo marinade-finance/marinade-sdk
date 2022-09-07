@@ -1,17 +1,37 @@
 use borsh::{BorshDeserialize, BorshSerialize};
 use solana_program::{
-    account_info::AccountInfo, entrypoint::ProgramResult, instruction::Instruction, msg,
-    program_error::ProgramError, program_pack::Pack, pubkey::Pubkey,
+    account_info::AccountInfo,
+    entrypoint::ProgramResult,
+    instruction::Instruction,
+    msg,
+    program_error::ProgramError,
+    program_pack::Pack,
+    pubkey::Pubkey,
+    stake, system_program,
+    sysvar::{clock, rent},
 };
 
+use crate::instructions::add_liquidity::{AddLiquidityAccounts, AddLiquidityData};
+use crate::instructions::change_authority::{ChangeAuthorityAccounts, ChangeAuthorityData};
+use crate::instructions::claim::{ClaimAccounts, ClaimData};
+use crate::instructions::config_lp::{ConfigLpAccounts, ConfigLpData};
+use crate::instructions::deposit::{DepositAccounts, DepositData};
+use crate::instructions::deposit_stake_account::{
+    DepositStakeAccountAccounts, DepositStakeAccountData,
+};
+use crate::instructions::liquid_unstake::{LiquidUnstakeAccounts, LiquidUnstakeData};
+use crate::instructions::order_unstake::{OrderUnstakeAccounts, OrderUnstakeData};
+use crate::instructions::remove_liquidity::{RemoveLiquidityAccounts, RemoveLiquidityData};
 use crate::{
     calc::{shares_from_value, value_from_shares},
     checks::check_address,
     error::CommonError,
-    instructions::config_lp::{ConfigLpAccounts, ConfigLpData},
     located::Located,
     state::{
-        fee::Fee, liq_pool::LiqPool, stake_system::StakeSystem, validator_system::ValidatorSystem,
+        fee::Fee,
+        liq_pool::{LiqPool, LiqPoolHelpers},
+        stake_system::StakeSystem,
+        validator_system::{ValidatorRecord, ValidatorSystem},
     },
     ID,
 };
@@ -294,6 +314,46 @@ pub trait MarinadeHelpers {
 
     // Instructions
     fn config_lp_instruction(&self, data: ConfigLpData) -> Instruction;
+    fn change_authority_instruction(&self, data: ChangeAuthorityData) -> Instruction;
+    fn deposit_stake_accounts(
+        &self,
+        data: DepositStakeAccountData,
+        stake_account: Pubkey,
+        stake_authority: Pubkey,
+        mint_to: Pubkey,
+        validator_vote: Pubkey,
+        rent_payer: Pubkey,
+    ) -> Instruction;
+    fn deposit(&self, data: DepositData, transfer_from: Pubkey, mint_to: Pubkey) -> Instruction;
+    fn add_liquidity(
+        &self,
+        data: AddLiquidityData,
+        transfer_from: Pubkey,
+        mint_to: Pubkey,
+    ) -> Instruction;
+    fn remove_liquidity(
+        &self,
+        data: RemoveLiquidityData,
+        burn_from: Pubkey,
+        burn_from_authority: Pubkey,
+        transfer_sol_to: Pubkey,
+        transfer_msol_to: Pubkey,
+    ) -> Instruction;
+    fn claim(&self, ticket_account: Pubkey, transfer_sol_to: Pubkey) -> Instruction;
+    fn liquid_unstake(
+        &self,
+        data: LiquidUnstakeData,
+        get_msol_from: Pubkey,
+        get_msol_from_authority: Pubkey,
+        transfer_sol_to: Pubkey,
+    ) -> Instruction;
+    fn order_unstake(
+        &self,
+        data: OrderUnstakeData,
+        burn_msol_from: Pubkey,
+        burn_msol_authority: Pubkey, // delegated or owner
+        new_ticket_account: Pubkey,
+    ) -> Instruction;
 }
 
 impl<T> MarinadeHelpers for T
@@ -344,6 +404,187 @@ where
             accounts: ConfigLpAccounts {
                 marinade: self.key(),
                 admin_authority: self.as_ref().admin_authority,
+            },
+            data,
+        };
+        (&builder).into()
+    }
+
+    fn change_authority_instruction(&self, data: ChangeAuthorityData) -> Instruction {
+        let builder = InstructionBuilder {
+            accounts: ChangeAuthorityAccounts {
+                marinade: self.key(),
+                admin_authority: self.as_ref().admin_authority,
+            },
+            data,
+        };
+        (&builder).into()
+    }
+
+    fn deposit_stake_accounts(
+        &self,
+        data: DepositStakeAccountData,
+        stake_account: Pubkey,
+        stake_authority: Pubkey,
+        mint_to: Pubkey,
+        validator_vote: Pubkey,
+        rent_payer: Pubkey,
+    ) -> Instruction {
+        let builder = InstructionBuilder {
+            accounts: DepositStakeAccountAccounts {
+                marinade: self.key(),
+                validator_list: *self.as_ref().validator_system.validator_list_address(),
+                stake_list: *self.as_ref().stake_system.stake_list_address(),
+                stake_account,
+                stake_authority,
+                duplication_flag: ValidatorRecord::find_duplication_flag(
+                    &self.key(),
+                    &validator_vote,
+                )
+                .0,
+                rent_payer,
+                msol_mint: self.as_ref().msol_mint,
+                mint_to,
+                msol_mint_authority: self.msol_mint_authority(),
+                clock: clock::id(),
+                rent: rent::id(),
+                system_program: system_program::ID,
+                token_program: spl_token::ID,
+                stake_program: stake::program::ID,
+            },
+            data,
+        };
+        (&builder).into()
+    }
+
+    fn deposit(&self, data: DepositData, transfer_from: Pubkey, mint_to: Pubkey) -> Instruction {
+        let builder = InstructionBuilder {
+            accounts: DepositAccounts {
+                marinade: self.key(),
+                msol_mint: self.as_ref().msol_mint,
+                liq_pool_sol_leg_pda: self.liq_pool_sol_leg_address(),
+                liq_pool_msol_leg: self.as_ref().liq_pool.msol_leg,
+                liq_pool_msol_leg_authority: self.liq_pool_msol_leg_authority(),
+                reserve_pda: self.reserve_address(),
+                transfer_from,
+                mint_to,
+                msol_mint_authority: self.msol_mint_authority(),
+                system_program: system_program::ID,
+                token_program: spl_token::ID,
+            },
+            data,
+        };
+        (&builder).into()
+    }
+
+    fn add_liquidity(
+        &self,
+        data: AddLiquidityData,
+        transfer_from: Pubkey,
+        mint_to: Pubkey,
+    ) -> Instruction {
+        let builder = InstructionBuilder {
+            accounts: AddLiquidityAccounts {
+                marinade: self.key(),
+                lp_mint: self.as_ref().liq_pool.lp_mint,
+                lp_mint_authority: self.lp_mint_authority(),
+                liq_pool_sol_leg_pda: self.liq_pool_sol_leg_address(),
+                liq_pool_msol_leg: self.as_ref().liq_pool.msol_leg,
+                transfer_from,
+                mint_to,
+                system_program: system_program::ID,
+                token_program: spl_token::ID,
+            },
+            data,
+        };
+        (&builder).into()
+    }
+
+    fn remove_liquidity(
+        &self,
+        data: RemoveLiquidityData,
+        burn_from: Pubkey,
+        burn_from_authority: Pubkey,
+        transfer_sol_to: Pubkey,
+        transfer_msol_to: Pubkey,
+    ) -> Instruction {
+        let builder = InstructionBuilder {
+            accounts: RemoveLiquidityAccounts {
+                marinade: self.key(),
+                lp_mint: self.as_ref().liq_pool.lp_mint,
+                burn_from,
+                burn_from_authority,
+                transfer_sol_to,
+                transfer_msol_to,
+                liq_pool_sol_leg_pda: self.liq_pool_sol_leg_address(),
+                liq_pool_msol_leg: self.as_ref().liq_pool.msol_leg,
+                liq_pool_msol_leg_authority: self.liq_pool_msol_leg_authority(),
+                system_program: system_program::ID,
+                token_program: spl_token::ID,
+            },
+            data,
+        };
+        (&builder).into()
+    }
+
+    fn claim(&self, ticket_account: Pubkey, transfer_sol_to: Pubkey) -> Instruction {
+        let data = ClaimData {};
+        let builder = InstructionBuilder {
+            accounts: ClaimAccounts {
+                marinade: self.key(),
+                reserve_pda: self.reserve_address(),
+                ticket_account,
+                transfer_sol_to,
+                system_program: system_program::ID,
+                clock: clock::ID,
+            },
+            data,
+        };
+        (&builder).into()
+    }
+
+    fn liquid_unstake(
+        &self,
+        data: LiquidUnstakeData,
+        get_msol_from: Pubkey,
+        get_msol_from_authority: Pubkey,
+        transfer_sol_to: Pubkey,
+    ) -> Instruction {
+        let builder = InstructionBuilder {
+            accounts: LiquidUnstakeAccounts {
+                marinade: self.key(),
+                msol_mint: self.as_ref().msol_mint,
+                liq_pool_sol_leg_pda: self.liq_pool_sol_leg_address(),
+                liq_pool_msol_leg: self.as_ref().liq_pool.msol_leg,
+                get_msol_from,
+                get_msol_from_authority,
+                transfer_sol_to,
+                treasury_msol_account: self.as_ref().treasury_msol_account,
+                system_program: system_program::ID,
+                token_program: spl_token::ID,
+            },
+            data,
+        };
+        (&builder).into()
+    }
+
+    fn order_unstake(
+        &self,
+        data: OrderUnstakeData,
+        burn_msol_from: Pubkey,
+        burn_msol_authority: Pubkey, // delegated or owner
+        new_ticket_account: Pubkey,
+    ) -> Instruction {
+        let builder = InstructionBuilder {
+            accounts: OrderUnstakeAccounts {
+                marinade: self.key(),
+                msol_mint: self.as_ref().msol_mint,
+                burn_msol_from,
+                burn_msol_authority,
+                new_ticket_account,
+                clock: clock::ID,
+                token_program: spl_token::ID,
+                rent: rent::ID,
             },
             data,
         };
