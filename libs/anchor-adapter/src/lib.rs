@@ -9,6 +9,7 @@ use micro_anchor::{AccountDeserialize, AccountDeserializeError, Discriminator, O
 pub struct Wrapper<T>(T);
 
 impl<T: Discriminator> AnchorDiscriminator for Wrapper<T> {
+    const DISCRIMINATOR: [u8; 8] = T::DISCRIMINATOR;
     fn discriminator() -> [u8; 8] {
         T::DISCRIMINATOR
     }
