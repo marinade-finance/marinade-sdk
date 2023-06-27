@@ -1,5 +1,5 @@
 use borsh::{BorshDeserialize, BorshSerialize};
-use solana_program::{entrypoint::ProgramResult, msg, program_error::ProgramError, pubkey::Pubkey};
+use solana_program::{entrypoint::ProgramResult, program_error::ProgramError, pubkey::Pubkey};
 
 use crate::{
     calc::proportional, checks::check_address, error::CommonError, located::Located,
@@ -59,11 +59,11 @@ impl LiqPool {
     }
 
     pub fn check_lp_mint(&mut self, lp_mint: &Pubkey) -> ProgramResult {
-        check_address(lp_mint, &self.lp_mint, "lp_mint")
+        check_address(lp_mint, &self.lp_mint)
     }
 
     pub fn check_liq_pool_msol_leg(&self, liq_pool_msol_leg: &Pubkey) -> ProgramResult {
-        check_address(liq_pool_msol_leg, &self.msol_leg, "liq_pool_msol_leg")
+        check_address(liq_pool_msol_leg, &self.msol_leg)
     }
 
     pub fn delta(&self) -> u32 {
@@ -102,21 +102,13 @@ impl LiqPool {
 
     pub fn check_liquidity_cap(
         &self,
-        transfering_lamports: u64,
+        transferring_lamports: u64,
         sol_leg_balance: u64,
     ) -> ProgramResult {
         let result_amount = sol_leg_balance
-            .checked_add(transfering_lamports)
-            .ok_or_else(|| {
-                msg!("SOL overflow");
-                ProgramError::InvalidArgument
-            })?;
+            .checked_add(transferring_lamports)
+            .ok_or_else(|| ProgramError::InvalidArgument)?;
         if result_amount > self.liquidity_sol_cap {
-            msg!(
-                "Liquidity cap reached {}/{}",
-                result_amount,
-                self.liquidity_sol_cap
-            );
             return Err(ProgramError::Custom(3782));
         }
         Ok(())
@@ -189,19 +181,11 @@ where
     }
 
     fn check_lp_mint_authority(&self, lp_mint_authority: &Pubkey) -> ProgramResult {
-        check_address(
-            lp_mint_authority,
-            &self.lp_mint_authority(),
-            "lp_mint_authority",
-        )
+        check_address(lp_mint_authority, &self.lp_mint_authority())
     }
 
     fn check_liq_pool_sol_leg_pda(&self, liq_pool_sol_leg_pda: &Pubkey) -> ProgramResult {
-        check_address(
-            liq_pool_sol_leg_pda,
-            &self.liq_pool_sol_leg_address(),
-            "liq_pool_sol_leg_pda",
-        )
+        check_address(liq_pool_sol_leg_pda, &self.liq_pool_sol_leg_address())
     }
 
     fn check_liq_pool_msol_leg_authority(
@@ -211,7 +195,6 @@ where
         check_address(
             liq_pool_msol_leg_authority,
             &self.liq_pool_msol_leg_authority(),
-            "liq_pool_msol_leg_authority",
         )
     }
 }

@@ -3,7 +3,6 @@ use solana_program::{
     account_info::AccountInfo,
     entrypoint::ProgramResult,
     instruction::Instruction,
-    msg,
     program_error::ProgramError,
     program_pack::Pack,
     pubkey::Pubkey,
@@ -123,16 +122,12 @@ impl Marinade {
     }
 
     pub fn check_admin_authority(&self, admin_authority: &Pubkey) -> ProgramResult {
-        check_address(admin_authority, &self.admin_authority, "admin_authority")?;
+        check_address(admin_authority, &self.admin_authority)?;
         Ok(())
     }
 
     pub fn check_operational_sol_account(&self, operational_sol_account: &Pubkey) -> ProgramResult {
-        check_address(
-            operational_sol_account,
-            &self.operational_sol_account,
-            "operational_sol_account",
-        )
+        check_address(operational_sol_account, &self.operational_sol_account)
     }
 
     /*
@@ -145,17 +140,9 @@ impl Marinade {
         &self,
         treasury_msol_account: &AccountInfo<'info>,
     ) -> Result<bool, ProgramError> {
-        check_address(
-            treasury_msol_account.key,
-            &self.treasury_msol_account,
-            "treasury_msol_account",
-        )?;
+        check_address(treasury_msol_account.key, &self.treasury_msol_account)?;
 
         if treasury_msol_account.owner != &spl_token::ID {
-            msg!(
-                "treasury_msol_account {} is not a token account",
-                treasury_msol_account.key
-            );
             return Ok(false); // Not an error. Admins may decide to reject fee transfers to themselves
         }
 
@@ -164,28 +151,17 @@ impl Marinade {
                 if token_account.mint == self.msol_mint {
                     Ok(true)
                 } else {
-                    msg!(
-                        "treasury_msol_account {} has wrong mint {}. Expected {}",
-                        treasury_msol_account.key,
-                        token_account.mint,
-                        self.msol_mint
-                    );
                     Ok(false) // Not an error. Admins may decide to reject fee transfers to themselves
                 }
             }
-            Err(e) => {
-                msg!(
-                    "treasury_msol_account {} can not be parsed as token account ({})",
-                    treasury_msol_account.key,
-                    e
-                );
+            Err(_) => {
                 Ok(false) // Not an error. Admins may decide to reject fee transfers to themselves
             }
         }
     }
 
     pub fn check_msol_mint(&mut self, msol_mint: &Pubkey) -> ProgramResult {
-        check_address(msol_mint, &self.msol_mint, "msol_mint")
+        check_address(msol_mint, &self.msol_mint)
     }
 
     pub fn total_cooling_down(&self) -> u64 {
@@ -209,16 +185,8 @@ impl Marinade {
         let result_amount = self
             .total_lamports_under_control()
             .checked_add(transfering_lamports)
-            .ok_or_else(|| {
-                msg!("SOL overflow");
-                ProgramError::InvalidArgument
-            })?;
+            .ok_or_else(|| ProgramError::InvalidArgument)?;
         if result_amount > self.staking_sol_cap {
-            msg!(
-                "Staking cap reached {}/{}",
-                result_amount,
-                self.staking_sol_cap
-            );
             return Err(ProgramError::Custom(3782));
         }
         Ok(())
@@ -387,15 +355,11 @@ where
     }
 
     fn check_reserve_address(&self, reserve: &Pubkey) -> ProgramResult {
-        check_address(reserve, &self.reserve_address(), "reserve")
+        check_address(reserve, &self.reserve_address())
     }
 
     fn check_msol_mint_authority(&self, msol_mint_authority: &Pubkey) -> ProgramResult {
-        check_address(
-            msol_mint_authority,
-            &self.msol_mint_authority(),
-            "msol_mint_authority",
-        )
+        check_address(msol_mint_authority, &self.msol_mint_authority())
     }
 
     // Instructions
