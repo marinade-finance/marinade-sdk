@@ -6,7 +6,7 @@ use crate::{
 };
 use borsh::{BorshDeserialize, BorshSerialize};
 use solana_program::{
-    account_info::AccountInfo, entrypoint::ProgramResult, msg, program_error::ProgramError,
+    account_info::AccountInfo, entrypoint::ProgramResult, program_error::ProgramError,
     pubkey::Pubkey,
 };
 
@@ -83,9 +83,8 @@ impl StakeSystem {
     }
 
     pub fn check_stake_list<'info>(&self, stake_list: &AccountInfo<'info>) -> ProgramResult {
-        check_address(stake_list.key, self.stake_list_address(), "stake_list")?;
+        check_address(stake_list.key, self.stake_list_address())?;
         if &stake_list.data.borrow().as_ref()[0..8] != StakeRecord::DISCRIMINATOR {
-            msg!("Wrong stake list account discriminator");
             return Err(ProgramError::InvalidAccountData);
         }
         Ok(())
@@ -121,11 +120,7 @@ where
     }
 
     fn check_stake_withdraw_authority(&self, stake_withdraw_authority: &Pubkey) -> ProgramResult {
-        check_address(
-            stake_withdraw_authority,
-            &self.stake_withdraw_authority(),
-            "stake_withdraw_authority",
-        )
+        check_address(stake_withdraw_authority, &self.stake_withdraw_authority())
     }
 
     fn stake_deposit_authority(&self) -> Pubkey {
@@ -143,10 +138,6 @@ where
     }
 
     fn check_stake_deposit_authority(&self, stake_deposit_authority: &Pubkey) -> ProgramResult {
-        check_address(
-            stake_deposit_authority,
-            &self.stake_deposit_authority(),
-            "stake_deposit_authority",
-        )
+        check_address(stake_deposit_authority, &self.stake_deposit_authority())
     }
 }

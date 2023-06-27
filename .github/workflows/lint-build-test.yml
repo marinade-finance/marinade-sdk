@@ -1,0 +1,17 @@
+name: Lint check, cargo build, cargo test test
+
+on: [push]
+
+jobs:
+  build_and_test:
+    name: marinade-sdk
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+      - run: |
+          cargo fmt --check
+          cargo build
+          cargo test

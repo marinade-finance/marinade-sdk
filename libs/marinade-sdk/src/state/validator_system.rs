@@ -141,23 +141,14 @@ impl ValidatorSystem {
         &self,
         validator_list: &AccountInfo<'info>,
     ) -> ProgramResult {
-        check_address(
-            validator_list.key,
-            self.validator_list_address(),
-            "validator_list",
-        )?;
+        check_address(validator_list.key, self.validator_list_address())?;
         if &validator_list.data.borrow().as_ref()[0..8] != ValidatorRecord::DISCRIMINATOR {
-            msg!("Wrong validator list account discriminator");
             return Err(ProgramError::InvalidAccountData);
         }
         Ok(())
     }
 
     pub fn check_validator_manager_authority(&self, manager_authority: &Pubkey) -> ProgramResult {
-        check_address(
-            manager_authority,
-            &self.manager_authority,
-            "validator_manager_authority",
-        )
+        check_address(manager_authority, &self.manager_authority)
     }
 }
