@@ -1,6 +1,6 @@
 [package]
 name = "marinade-sdk-macro"
-version = "0.1.0"
+version = "0.2.0"
 edition = "2021"
 
 [lib]
@@ -11,10 +11,9 @@ syn = {version="1.0.99", features=["full","fold"]}
 syn-unnamed-struct = "0.1.0"
 quote = "1.0.21"
 proc-macro2 = "1.0.43"
-log = "0.4.17"
 
 [dev-dependencies]
 micro-anchor = { path = "../../libs/micro-anchor" }
-solana-program = "~1.14.6"
-borsh = "0.9.3"
+solana-program = "~1.16"
+borsh = "0.10.3"
 is_trait = "0.1.4"

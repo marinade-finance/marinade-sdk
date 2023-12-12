@@ -1,6 +1,6 @@
 [package]
 name = "marinade-sdk"
-version = "0.1.0"
+version = "0.2.0"
 description = "Created with Anchor"
 edition = "2021"
 
@@ -13,9 +13,9 @@ name = "marinade_sdk"
 overflow-checks = true
 
 [dependencies]
-borsh = "0.9.3"
+borsh = "0.10.3"
 derive_more = "0.99.17"
 micro-anchor = { path = "../../libs/micro-anchor" }
 marinade-sdk-macro = { path = "../../libs/marinade-sdk-macro" }
-solana-program = "~1.14.6"
+solana-program = "~1.16"
 spl-token = { version = "~3.5.0", features = ["no-entrypoint"] }
