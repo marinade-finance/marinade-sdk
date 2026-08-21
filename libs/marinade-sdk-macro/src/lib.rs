@@ -57,7 +57,7 @@ pub fn derive_instruction_data(input: TokenStream) -> TokenStream {
         .filter(|a| a.path.is_ident("discriminator"))
         .flat_map(|attr| attr.tokens.clone())
         .collect::<Vec<_>>();
-    if let Some(discriminator_attr) = discriminator_attrs.get(0) {
+    if let Some(discriminator_attr) = discriminator_attrs.first() {
         let discriminator_impl = quote! {
             impl micro_anchor::Discriminator for #name {
                 const DISCRIMINATOR:[u8;8] = #discriminator_attr;
@@ -149,7 +149,7 @@ fn get_related_struct_idents(
 }
 
 fn emit_struct_fields_non_pubkey(
-    struct_fields: &Vec<(Ident, AccountsFieldData)>,
+    struct_fields: &[(Ident, AccountsFieldData)],
     base_pattern: &str,
     f: fn(&AccountsFieldData) -> String,
 ) -> Vec<TokenStream2> {
@@ -168,7 +168,7 @@ fn emit_struct_fields_non_pubkey(
 }
 
 fn emit_struct_fields_at_pattern(
-    struct_fields: &Vec<(Ident, AccountsFieldData)>,
+    struct_fields: &[(Ident, AccountsFieldData)],
     base_pattern: &str,
     f: fn(&AccountsFieldData) -> &str,
 ) -> Vec<TokenStream2> {
@@ -304,11 +304,9 @@ pub fn derive_instruction_accounts(input: TokenStream) -> TokenStream {
 
     let (generatad_data_struct_name, infos_struct_name) =
         get_related_struct_idents(struct_name.to_string());
-    let data_struct_name = if meta_attributes.data_struct_name.is_some() {
-        meta_attributes.data_struct_name.unwrap()
-    } else {
-        generatad_data_struct_name.to_token_stream()
-    };
+    let data_struct_name = meta_attributes
+        .data_struct_name
+        .unwrap_or_else(|| generatad_data_struct_name.to_token_stream());
 
     let obj = match data {
         syn::Data::Struct(obj) => obj,

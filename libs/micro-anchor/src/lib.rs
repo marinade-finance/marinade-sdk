@@ -40,7 +40,7 @@ pub trait AccountDeserialize: Sized + BorshDeserialize + Discriminator + Owner {
     fn try_deserialize_unchecked(buf: &mut &[u8]) -> Result<Self, AccountDeserializeError> {
         let mut data: &[u8] = &buf[8..];
         BorshDeserialize::deserialize(&mut data)
-            .map_err(|_| AccountDeserializeError::DidNotDeserialize.into())
+            .map_err(|_| AccountDeserializeError::DidNotDeserialize)
     }
 
     /// Deserializes account data without checking the account discriminator.
@@ -48,11 +48,11 @@ pub trait AccountDeserialize: Sized + BorshDeserialize + Discriminator + Owner {
     /// the account are zeroed.
     fn try_deserialize(buf: &mut &[u8]) -> Result<Self, AccountDeserializeError> {
         if buf.len() < Self::DISCRIMINATOR.len() {
-            return Err(AccountDeserializeError::DiscriminatorNotFound.into());
+            return Err(AccountDeserializeError::DiscriminatorNotFound);
         }
         let given_disc = &buf[..8];
-        if &Self::DISCRIMINATOR != given_disc {
-            return Err(AccountDeserializeError::DiscriminatorMismatch.into());
+        if Self::DISCRIMINATOR != given_disc {
+            return Err(AccountDeserializeError::DiscriminatorMismatch);
         }
         Self::try_deserialize_unchecked(buf)
     }
