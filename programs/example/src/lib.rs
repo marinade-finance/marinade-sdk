@@ -1,4 +1,5 @@
 #![allow(dead_code, unused_variables)]
+#![allow(clippy::result_large_err)]
 
 use anchor_lang::prelude::*;
 

@@ -18,7 +18,7 @@ mod tests {
     }
 
     #[test]
-    fn test_account_infos<'info>() {
+    fn test_account_infos() {
         // SimpleTestData struct is required ->
         //   as the macro InstructionAccounts depends on existence of it
         #[derive(BorshSerialize, BorshDeserialize)]
@@ -86,7 +86,7 @@ mod tests {
     }
 
     #[test]
-    fn test_account_infos_nested<'info>() {
+    fn test_account_infos_nested() {
         // requred by InstructionAccounts
         #[derive(InstructionData, BorshSerialize, BorshDeserialize)]
         #[discriminator([1,2,3,4,5,6,7,8])]

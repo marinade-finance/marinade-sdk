@@ -46,7 +46,7 @@ impl List {
         )
         .map_err(|_| ProgramError::from(CommonError::CalculationFailure))?
         .checked_div(self.item_size())
-        .unwrap_or(std::u32::MAX)) // for zst element (why you are using it in list?)
+        .unwrap_or(u32::MAX)) // for zst element (why you are using it in list?)
     }
 
     pub fn get<I: BorshDeserialize>(

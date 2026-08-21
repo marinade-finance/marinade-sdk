@@ -72,7 +72,7 @@ impl ValidatorRecord {
             validator_account,
             active_balance: 0,
             score,
-            last_stake_delta_epoch: std::u64::MAX, // never
+            last_stake_delta_epoch: u64::MAX, // never
             duplication_flag_bump_seed,
         })
     }
